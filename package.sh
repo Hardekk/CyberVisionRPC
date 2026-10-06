@@ -44,9 +44,16 @@ cp './src/redscript/CyberVisionRPC.reds' "$REDSCRIPT_TARGET"
 cp './src/red4ext/build/Release/cybervisionrpc.dll'                            "$RED4EXT_TARGET"
 cp './src/red4ext/libs/discord_game_sdk/lib/x86_64/discord_game_sdk.dll' "$RED4EXT_TARGET"
 
-# Create zip
+# Create zips: French and English editions
 
-7z a -mx9 -r -- "$ARTIFACT_DIR/CyberVisionRPC-$MOD_VERSION.zip" \
+7z a -mx9 -r -- "$ARTIFACT_DIR/CyberVisionRPC-FR-$MOD_VERSION.zip" \
+    "./$BASE/bin" \
+    "./$BASE/r6"  \
+    "./$BASE/red4ext"
+
+sed -i 's/Localization:SetLocale("fr")/Localization:SetLocale("en")/' "$CET_TARGET/init.lua"
+
+7z a -mx9 -r -- "$ARTIFACT_DIR/CyberVisionRPC-EN-$MOD_VERSION.zip" \
     "./$BASE/bin" \
     "./$BASE/r6"  \
     "./$BASE/red4ext"

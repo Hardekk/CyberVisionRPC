@@ -62,4 +62,5 @@ return {
     ["CyberVision.Weather.Snow"] = "Neige",
     ["CyberVision.Weather.Cloudy"] = "Nuageux",
     ["CyberVision.Weather.Clear"] = "Ciel dégagé",
+    ["UI.Config.Activities.Item.CyberVision.Combat"] = "Combat",
 }
