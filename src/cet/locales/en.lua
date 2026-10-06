@@ -108,4 +108,6 @@ While pressing the '<' or '>' button will modify the priority of the activity. T
     ["CyberVision.Weather.Cloudy"] = "Cloudy",
     ["CyberVision.Weather.Clear"] = "Clear sky",
     ["UI.Config.Activities.Item.CyberVision.Combat"] = "Combat",
+    ["Common.LifePath.Count"] = "Corpo-Nomad",
+    ["Common.LifePath.NewStart"] = "Corpo-Nomad",
 }
