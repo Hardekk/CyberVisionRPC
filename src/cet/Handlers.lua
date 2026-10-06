@@ -362,17 +362,36 @@ end
 
 ---@param mod CyberVisionRPC
 ---@param activity Activity
+function Handlers.GetWantedLevel()
+    -- HUD wanted bar first (matches the stars shown on screen), then PreventionSystem.
+    local ok, lvl = pcall(function()
+        local defs = GetAllBlackboardDefs().UI_WantedBar
+        return Game.GetBlackboardSystem():Get(defs):GetInt(defs.CurrentWantedLevel)
+    end)
+    if ok and type(lvl) == "number" and lvl > 0 then return lvl; end
+    ok, lvl = pcall(function()
+        local ps = Game.GetScriptableSystemsContainer():Get("PreventionSystem")
+        local stage = ps:GetHeatStage()
+        return tonumber(stage) or EnumInt(stage)
+    end)
+    if ok and type(lvl) == "number" and lvl > 0 then return lvl; end
+    return 0
+end
+
 function Handlers.Wanted(mod, activity)
     if mod.gameState ~= mod.GameStates.Playing or not mod.player then return; end
-    local ok, stars = pcall(function()
-        local ps = Game.GetScriptableSystemsContainer():Get("PreventionSystem")
-        return EnumInt(ps:GetHeatStage())
-    end)
-    if not ok or not stars or stars <= 0 then return; end
-    if not Handlers.DarkFuture(mod, activity) then Handlers.Playing(mod, activity) end
-    activity.Details = mod.Localization:GetFormatted("CyberVision.Wanted.Details", {
-        stars = string.rep("★", stars) .. string.rep("☆", math.max(0, 5 - stars))
+    local stars = math.min(5, Handlers.GetWantedLevel())
+    if stars <= 0 then return; end
+    local wanted = mod.Localization:GetFormatted("CyberVision.Wanted.Details", {
+        stars = string.rep("★", stars) .. string.rep("☆", 5 - stars)
     })
+    if mod.player:IsInCombat() and Handlers.Combat(mod, activity) then
+        -- Keep combat info on top, wanted level underneath
+        activity.State = wanted
+    else
+        if not Handlers.DarkFuture(mod, activity) then Handlers.Playing(mod, activity) end
+        activity.Details = wanted
+    end
     return true
 end
 
@@ -380,8 +399,8 @@ end
 function Handlers:RegisterHandlers(mod)
     mod:SetActivityHandler("DiscordRPC2.Playing",      self.Playing)
     mod:SetActivityHandler("CyberVision.DarkFuture",   self.DarkFuture)
+    mod:SetActivityHandler("CyberVision.Combat",       self.Combat)
     mod:SetActivityHandler("CyberVision.Wanted",       self.Wanted)
-    mod:SetActivityHandler("DiscordRPC2.Combat",       self.Combat,  false)
     mod:SetActivityHandler("DiscordRPC2.Driving",      self.Driving, false)
     mod:SetActivityHandler("DiscordRPC2.Radio",        self.Radio,   false)
     mod:SetActivityHandler("CyberVision.Braindance",   self.Braindance)
