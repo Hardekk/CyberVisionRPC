@@ -9,8 +9,8 @@ return {
     ["DeathMenu.State"] = "Trauma Team en route...",
 
     ["Common.LargeImageText"] = "CyberVision · Niv. {level} · Street Cred {streetCred}",
-    ["Common.SmallImageText"] = "{lifepath}",
-    ["Common.SmallImageText.WPlaythroughTime"] = "{lifepath} · {playthroughTime}h de jeu",
+    ["Common.SmallImageText"] = "CyberVision · {lifepath}",
+    ["Common.SmallImageText.WPlaythroughTime"] = "CyberVision · {lifepath} · {playthroughTime}h de jeu",
     ["Common.LifePath.Nomad"] = "Nomade",
     ["Common.LifePath.StreetKid"] = "Gosse des rues",
     ["Common.LifePath.Corporate"] = "Corpo",

@@ -51,7 +51,8 @@ cp './src/red4ext/libs/discord_game_sdk/lib/x86_64/discord_game_sdk.dll' "$RED4E
     "./$BASE/r6"  \
     "./$BASE/red4ext"
 
-sed -i 's/Localization:SetLocale("fr")/Localization:SetLocale("en")/' "$CET_TARGET/init.lua"
+sed -i 's/^local EDITION = "fr"/local EDITION = "en"/' "$CET_TARGET/init.lua"
+grep -q '^local EDITION = "en"' "$CET_TARGET/init.lua"
 
 7z a -mx9 -r -- "$ARTIFACT_DIR/CyberVisionRPC-EN-$MOD_VERSION.zip" \
     "./$BASE/bin" \

@@ -40,13 +40,16 @@ function Handlers.SetCommonInfo(mod, activity, activityVars)
     activityVars.streetCred = level.streetCred
     activityVars.lifepath = mod.Localization:Get("Common.LifePath." .. (lifepath or "?"))
 
-    activity.LargeImageKey = mod:GetGenderImageKey(GameUtils.GetGender(mod.player))
+    local lifepathKey = lifepath and lifepath:lower() or ""
+    local knownLifepath = lifepathKey == "nomad" or lifepathKey == "streetkid" or lifepathKey == "corporate"
+    -- In game: life path character as the main image, CyberVision logo as the badge
+    activity.LargeImageKey = knownLifepath and lifepathKey or "cybervision"
     local amb = Handlers.GetAmbience(mod)
     activityVars.time = amb.time
     activityVars.weather = amb.weather
     activity.LargeImageText = mod.Localization:GetFormatted(
         (amb.time and amb.weather) and "Common.LargeImageText.Ambience" or "Common.LargeImageText", activityVars)
-    activity.SmallImageKey = lifepath:lower()
+    activity.SmallImageKey = knownLifepath and "cybervision" or ""
     if mod.showPlaythroughTime and mod.playthroughTime then
         activityVars.playthroughTime = math.floor(mod.playthroughTime / 3600)
         activity.SmallImageText = mod.Localization:GetFormatted("Common.SmallImageText.WPlaythroughTime", activityVars)
