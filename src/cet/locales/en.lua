@@ -15,8 +15,8 @@ return {
 
     -- Common Vars: level, streetCred, playthroughTime (hours, if available)
     ["Common.LargeImageText"] = "Level: {level}; Street Cred: {streetCred}",
-    ["Common.SmallImageText"] = "{lifepath}",
-    ["Common.SmallImageText.WPlaythroughTime"] = "{playthroughTime}h {lifepath}",
+    ["Common.SmallImageText"] = "CyberVision · {lifepath}",
+    ["Common.SmallImageText.WPlaythroughTime"] = "CyberVision · {lifepath} · {playthroughTime}h played",
     -- Translations for life paths
     ["Common.LifePath.Nomad"] = "Nomad",
     ["Common.LifePath.StreetKid"] = "Streetkid",

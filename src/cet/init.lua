@@ -29,6 +29,9 @@ local Handlers = require "Handlers"
 local Localization = require "Localization"
 
 ---@enum GameStates
+-- Edition of this build ("fr" or "en"); package.sh switches it for the English zip.
+local EDITION = "fr"
+
 local GameStates = {
     None = 0,
     MainMenu = 1,
@@ -107,7 +110,7 @@ function CyberVisionRPC:ResetConfig()
     self.enabled = true
     self.submitInterval = 5
     self.style = ""
-    Localization:SetLocale("fr")
+    Localization:SetLocale(EDITION)
     self.showQuest = true
     self.showQuestObjective = false
     self.enableRadioExtIntegration = true
@@ -129,6 +132,7 @@ function CyberVisionRPC:SaveConfig()
         submitInterval = self.submitInterval,
         style = self.style,
         locale = Localization:GetCurrentLocale().name,
+        edition = EDITION,
         showQuest = self.showQuest,
         showQuestObjective = self.showQuestObjective,
         enableRadioExtIntegration = self.enableRadioExtIntegration,
@@ -158,7 +162,8 @@ function CyberVisionRPC:LoadConfig()
             self.style = config.style
         end
 
-        if type(config.locale) == "string" then
+        -- Only reuse the saved language if it was saved by this same edition
+        if type(config.locale) == "string" and config.edition == EDITION then
             if not Localization:SetLocale(config.locale) then
                 ConsoleLog("Couldn't set '", config.locale, "' as main locale.")
             end
