@@ -63,4 +63,6 @@ return {
     ["CyberVision.Weather.Cloudy"] = "Nuageux",
     ["CyberVision.Weather.Clear"] = "Ciel dégagé",
     ["UI.Config.Activities.Item.CyberVision.Combat"] = "Combat",
+    ["Common.LifePath.Count"] = "Corpo-Nomade",
+    ["Common.LifePath.NewStart"] = "Corpo-Nomade",
 }

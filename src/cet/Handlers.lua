@@ -41,7 +41,10 @@ function Handlers.SetCommonInfo(mod, activity, activityVars)
     activityVars.lifepath = mod.Localization:Get("Common.LifePath." .. (lifepath or "?"))
 
     local lifepathKey = lifepath and lifepath:lower() or ""
-    local knownLifepath = lifepathKey == "nomad" or lifepathKey == "streetkid" or lifepathKey == "corporate"
+    -- Fresh Start ("New Start") registers its life path with enumName "Count": Corpo + Nomad
+    if lifepathKey == "count" or lifepathKey == "newstart" then lifepathKey = "corpomad"; end
+    local knownLifepath = lifepathKey == "nomad" or lifepathKey == "streetkid"
+        or lifepathKey == "corporate" or lifepathKey == "corpomad"
     -- In game: life path character as the main image, CyberVision logo as the badge
     activity.LargeImageKey = knownLifepath and lifepathKey or "cybervision"
     local amb = Handlers.GetAmbience(mod)
