@@ -116,6 +116,7 @@ function CyberVisionRPC:ResetConfig()
     self.enableRadioExtIntegration = true
     self.showPlaythroughTime = false
     self.speedAsMPH = false
+    self.homes = {}
     self:ConfigActivityHandlers(self._initHandlersConfig)
 end
 
@@ -139,6 +140,7 @@ function CyberVisionRPC:SaveConfig()
         showPlaythroughTime = self.showPlaythroughTime,
         speedAsMPH = self.speedAsMPH,
         handlers = handlers,
+        homes = self.homes or {},
     }))
     io.close(file)
 end
@@ -191,6 +193,15 @@ function CyberVisionRPC:LoadConfig()
 
         if type(config.handlers) == "table" then
             self:ConfigActivityHandlers(config.handlers)
+        end
+
+        if type(config.homes) == "table" then
+            self.homes = {}
+            for _, h in ipairs(config.homes) do
+                if type(h) == "table" and type(h.x) == "number" and type(h.y) == "number" and type(h.z) == "number" then
+                    table.insert(self.homes, { x = h.x, y = h.y, z = h.z })
+                end
+            end
         end
     end)
     
@@ -507,6 +518,22 @@ local function Event_OnDraw()
         end
         CyberVisionRPC.showPlaythroughTime = ImGui.Checkbox(Localization:Get("UI.Config.ShowPlaythroughTime"), CyberVisionRPC.showPlaythroughTime)
         CyberVisionRPC.speedAsMPH = ImGui.Checkbox(Localization:Get("UI.Config.SpeedAsMPH"), CyberVisionRPC.speedAsMPH)
+
+        ImGui.Separator()
+        CyberVisionRPC.homes = CyberVisionRPC.homes or {}
+        ImGui.Text(Localization:GetFormatted("CyberVision.UI.Homes", { count = #CyberVisionRPC.homes }))
+        if ImGui.Button(Localization:Get("CyberVision.UI.SetHome")) and CyberVisionRPC.player then
+            local ok, pos = pcall(function() return CyberVisionRPC.player:GetWorldPosition() end)
+            if ok and pos then
+                table.insert(CyberVisionRPC.homes, { x = pos.x, y = pos.y, z = pos.z })
+                CyberVisionRPC:SaveConfig()
+            end
+        end
+        ImGui.SameLine()
+        if ImGui.Button(Localization:Get("CyberVision.UI.ClearHomes")) then
+            CyberVisionRPC.homes = {}
+            CyberVisionRPC:SaveConfig()
+        end
 
         if ImGui.CollapsingHeader(Localization:Get("UI.Config.Activities")) then
             ImGui.TextWrapped(Localization:Get("UI.Config.Activities.Description"))
