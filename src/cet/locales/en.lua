@@ -140,4 +140,8 @@ While pressing the '<' or '>' button will modify the priority of the activity. T
     ["UI.Config.Activities.Item.CyberVision.Resting"] = "Resting / waiting",
     ["UI.Config.Activities.Item.CyberVision.Hacking"] = "Hacking & scanner",
     ["UI.Config.Activities.Item.CyberVision.Shops"] = "Shops & ripperdoc",
+    ["CyberVision.DarkFuture.Low.Nutrition"] = "Starving",
+    ["CyberVision.DarkFuture.Low.Hydration"] = "Dehydrated",
+    ["CyberVision.DarkFuture.Low.Energy"] = "Exhausted",
+    ["CyberVision.DarkFuture.Low.Nerve"] = "Nerves shot",
 }

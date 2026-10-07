@@ -95,4 +95,8 @@ return {
     ["UI.Config.Activities.Item.CyberVision.Resting"] = "Repos / attente",
     ["UI.Config.Activities.Item.CyberVision.Hacking"] = "Hacking et scanner",
     ["UI.Config.Activities.Item.CyberVision.Shops"] = "Boutiques et charcudoc",
+    ["CyberVision.DarkFuture.Low.Nutrition"] = "Affamé",
+    ["CyberVision.DarkFuture.Low.Hydration"] = "Assoiffé",
+    ["CyberVision.DarkFuture.Low.Energy"] = "Épuisé",
+    ["CyberVision.DarkFuture.Low.Nerve"] = "À bout de nerfs",
 }

@@ -7,7 +7,7 @@ Discord Rich Presence for the **CyberVision** Cyberpunk 2077 modlist. Available 
 - Current quest with its type (main job, side job, gig...), or the district you're roaming
 - Level, Street Cred, in-game time and weather
 - Life path (Nomad, Streetkid, Corpo, Fresh Start Corpo-Nomad) and playtime
-- Dark Future survival needs (food, water, energy, nerve)
+- Dark Future critical needs (below 20%): starving, dehydrated, exhausted, nerves shot
 - NCPD wanted level, from the first star
 - Combat (health and weapon), with boss and cyberpsycho names
 - Hacking: breach protocol, quickhacks, scanner
