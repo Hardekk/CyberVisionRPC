@@ -340,12 +340,18 @@ function Handlers.DarkFuture(mod, activity)
     if not Handlers.Playing(mod, activity) then return; end
     local needs = Handlers.GetDarkFutureNeeds()
     if not needs then return true; end
-    local line = mod.Localization:GetFormatted("CyberVision.DarkFuture.State", {
-        nutrition = needs.Nutrition, hydration = needs.Hydration,
-        energy = needs.Energy, nerve = needs.Nerve
-    })
+    -- Only show needs that are critical (below 20%)
+    local parts = {}
+    for _, n in ipairs(DF_NEEDS) do
+        local v = needs[n.key]
+        if v and v < 20 then
+            table.insert(parts, mod.Localization:Get("CyberVision.DarkFuture.Low." .. n.key))
+        end
+    end
+    if #parts == 0 then return true; end
+    local line = table.concat(parts, " · ")
     if activity.State and activity.State ~= "" then
-        activity.State = activity.State .. " | " .. line
+        activity.State = line .. " | " .. activity.State
     else
         activity.State = line
     end
