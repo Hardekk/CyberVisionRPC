@@ -119,6 +119,14 @@ function GameUtils.GetActiveQuest()
 
     local titleLocKey = quest:GetTitle(journal)
     res.name = Game.GetLocalizedText(titleLocKey)
+
+    -- Quest type (MainQuest, SideQuest, Contract, ...)
+    pcall(function()
+        local t = tostring(quest:GetType())
+        for _, name in ipairs({ "MainQuest", "SideQuest", "MinorQuest", "StreetStory", "Contract", "CyberPsycho", "Apartment", "Vehicle" }) do
+            if t:find(name, 1, true) then res.type = name; break; end
+        end
+    end)
     return res
 end
 

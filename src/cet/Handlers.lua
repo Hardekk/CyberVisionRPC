@@ -24,6 +24,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 ]]
 
 local GameUtils = require "GameUtils"
+local GameUI = require "libs/cp2077-cet-kit/GameUI"
 
 local Handlers = { }
 
@@ -117,6 +118,14 @@ function Handlers.Combat(mod, activity)
         })
         
         activity.Details = mod.Localization:GetFormatted("Combat.Details", activityVars)
+        local foe = Handlers.GetSpecialFoe(mod)
+        if foe then
+            activityVars.foe = foe.name
+            activity.Details = mod.Localization:GetFormatted(
+                foe.cyberpsycho and "CyberVision.Combat.Cyberpsycho" or "CyberVision.Combat.Boss", activityVars)
+                .. " · " .. activityVars.health .. "/" .. activityVars.maxHealth
+                .. mod.Localization:Get("CyberVision.HP")
+        end
         activity.State = weaponName and
             mod.Localization:GetFormatted("Combat.State.Weapon", activityVars) or
             mod.Localization:GetFormatted("Combat.State.NoWeapon", activityVars)
@@ -223,6 +232,12 @@ function Handlers.Playing(mod, activity)
                 })
                 if not (mod.showQuestObjective and activityVars.objective) then activityVars.objective = ""; end
                 activity.Details = mod.Localization:GetFormatted("Playing.Details", activityVars)
+                if questInfo.type then
+                    local label = mod.Localization:Get("CyberVision.QuestType." .. questInfo.type)
+                    if label and label ~= "" and not label:find("CyberVision.QuestType", 1, true) then
+                        activity.Details = label .. " · " .. activity.Details
+                    end
+                end
                 activity.State = mod.Localization:GetFormatted("Playing.State", activityVars)
             end
         end
@@ -401,14 +416,190 @@ function Handlers.Wanted(mod, activity)
     return true
 end
 
+
+-- ===== CyberVision: boss / cyberpsycho detection =====
+
+local lastFoe, lastFoeTime = nil, 0
+
+local function classifyTarget(obj)
+    if not obj then return nil; end
+    local isNPC = false
+    pcall(function() isNPC = obj:IsNPC() end)
+    if not isNPC then return nil; end
+    local alive = true
+    pcall(function() alive = not obj:IsDead() end)
+    if not alive then return nil; end
+
+    local boss, psycho = false, false
+    pcall(function()
+        local r = tostring(obj:GetNPCRarity())
+        if r:find("Boss", 1, true) or r:find("MaxTac", 1, true) then boss = true; end
+    end)
+    pcall(function()
+        local rec = TweakDBInterface.GetCharacterRecord(obj:GetRecordID())
+        if rec:TagsContains(CName.new("Cyberpsycho")) then psycho = true; end
+        local cls = rec:CharacterType() and tostring(rec:CharacterType():Type()) or ""
+        if cls:find("Cyberpsycho", 1, true) then psycho = true; end
+    end)
+    pcall(function() if obj:IsCharacterCyberpsycho() then psycho = true; end end)
+    if not (boss or psycho) then return nil; end
+
+    local name = nil
+    pcall(function() name = obj:GetDisplayName() end)
+    if not name or name == "" then
+        pcall(function()
+            local rec = TweakDBInterface.GetCharacterRecord(obj:GetRecordID())
+            name = Game.GetLocalizedTextByKey(rec:DisplayName())
+        end)
+    end
+    if not name or name == "" then return nil; end
+    return { name = name, cyberpsycho = psycho }
+end
+
+---Boss or cyberpsycho the player is currently fighting (sticky for 30s).
+function Handlers.GetSpecialFoe(mod)
+    local foe = nil
+    pcall(function()
+        local obj = Game.GetTargetingSystem():GetLookAtObject(mod.player, false, false)
+        foe = classifyTarget(obj)
+    end)
+    local now = os.clock()
+    if foe then
+        lastFoe, lastFoeTime = foe, now
+        return foe
+    end
+    if lastFoe and now - lastFoeTime < 30 then return lastFoe; end
+    lastFoe = nil
+    return nil
+end
+
+-- ===== CyberVision: hacking, scanner, menus =====
+
+---@param mod CyberVisionRPC
+---@param activity Activity
+function Handlers.Hacking(mod, activity)
+    if mod.gameState ~= mod.GameStates.Playing or not mod.player then return; end
+    local key = nil
+    if GameUI.GetMenu() == "NetworkBreach" then
+        key = "Breach"
+    elseif GameUI.IsQuickHack() then
+        key = "QuickHack"
+    elseif GameUI.IsScanner() then
+        local inCombat = false
+        pcall(function() inCombat = mod.player:IsInCombat() end)
+        key = inCombat and "ScannerCombat" or "Scanner"
+    end
+    if not key then return; end
+    Handlers.SetCommonInfo(mod, activity)
+    activity.Details = mod.Localization:Get("CyberVision.Hacking." .. key)
+    activity.State = ""
+    return true
+end
+
+---@param mod CyberVisionRPC
+---@param activity Activity
+function Handlers.Shops(mod, activity)
+    if mod.gameState ~= mod.GameStates.Playing or not mod.player then return; end
+    local menu, sub = GameUI.GetMenu(), GameUI.GetSubmenu()
+    local key = nil
+    if menu == "Vendor" then
+        if sub == "RipperDoc" then key = "Ripperdoc"
+        elseif sub == "Crafting" then key = "Crafting"
+        else key = "Vendor" end
+    elseif menu == "Stash" then
+        key = "Stash"
+    end
+    if not key then return; end
+    Handlers.SetCommonInfo(mod, activity)
+    activity.Details = mod.Localization:Get("CyberVision.Shop." .. key)
+    activity.State = ""
+    return true
+end
+
+-- ===== CyberVision: resting / waiting (game time running much faster than real time) =====
+
+local lastGameSecs, lastRealSecs, restingUntil = nil, nil, 0
+
+local function updateRestDetection()
+    local ok, gameSecs = pcall(function()
+        return Game.GetTimeSystem():GetGameTimeStamp()
+    end)
+    local real = os.clock()
+    if ok and type(gameSecs) == "number" then
+        if lastGameSecs and lastRealSecs and real > lastRealSecs then
+            local ratio = (gameSecs - lastGameSecs) / (real - lastRealSecs)
+            -- Normal speed is ~8 game seconds per real second
+            if ratio > 60 then restingUntil = real + 6; end
+        end
+        lastGameSecs, lastRealSecs = gameSecs, real
+    end
+    return real < restingUntil
+end
+
+---@param mod CyberVisionRPC
+---@param activity Activity
+function Handlers.Resting(mod, activity)
+    if mod.gameState ~= mod.GameStates.Playing or not mod.player then return; end
+    local resting = updateRestDetection()
+    if not resting then return; end
+    local inCombat = false
+    pcall(function() inCombat = mod.player:IsInCombat() end)
+    if inCombat then return; end
+    if not Handlers.DarkFuture(mod, activity) then Handlers.Playing(mod, activity) end
+    activity.Details = mod.Localization:Get(Handlers.IsAtHome(mod) and "CyberVision.Rest.Sleep" or "CyberVision.Rest.Wait")
+    return true
+end
+
+-- ===== CyberVision: home (positions saved from the CET window) =====
+
+local HOME_RADIUS = 30
+
+function Handlers.GetPlayerPosition(mod)
+    local ok, pos = pcall(function() return mod.player:GetWorldPosition() end)
+    if ok and pos then return { x = pos.x, y = pos.y, z = pos.z }; end
+    return nil
+end
+
+function Handlers.IsAtHome(mod)
+    if not mod.homes or #mod.homes == 0 then return false; end
+    local p = Handlers.GetPlayerPosition(mod)
+    if not p then return false; end
+    for _, h in ipairs(mod.homes) do
+        local dx, dy, dz = p.x - h.x, p.y - h.y, p.z - h.z
+        if dx*dx + dy*dy + dz*dz <= HOME_RADIUS * HOME_RADIUS then return true; end
+    end
+    return false
+end
+
+---@param mod CyberVisionRPC
+---@param activity Activity
+function Handlers.Home(mod, activity)
+    if mod.gameState ~= mod.GameStates.Playing or not mod.player then return; end
+    if not Handlers.IsAtHome(mod) then return; end
+    local inCombat = false
+    pcall(function() inCombat = mod.player:IsInCombat() end)
+    if inCombat or Handlers.GetWantedLevel() > 0 then return; end
+    if not Handlers.DarkFuture(mod, activity) then Handlers.Playing(mod, activity) end
+    local district = GameUtils.GetDistrict()
+    local where = district.sub or district.main
+    activity.Details = where
+        and mod.Localization:GetFormatted("CyberVision.Home.District", { district = where })
+        or mod.Localization:Get("CyberVision.Home")
+    return true
+end
+
 ---@param mod CyberVisionRPC
 function Handlers:RegisterHandlers(mod)
     mod:SetActivityHandler("DiscordRPC2.Playing",      self.Playing)
     mod:SetActivityHandler("CyberVision.DarkFuture",   self.DarkFuture)
+    mod:SetActivityHandler("CyberVision.Home",         self.Home)
+    mod:SetActivityHandler("CyberVision.Resting",      self.Resting)
     mod:SetActivityHandler("CyberVision.Combat",       self.Combat)
     mod:SetActivityHandler("CyberVision.Wanted",       self.Wanted)
     mod:SetActivityHandler("DiscordRPC2.Driving",      self.Driving, false)
     mod:SetActivityHandler("DiscordRPC2.Radio",        self.Radio,   false)
+    mod:SetActivityHandler("CyberVision.Hacking",      self.Hacking)
+    mod:SetActivityHandler("CyberVision.Shops",        self.Shops)
     mod:SetActivityHandler("CyberVision.Braindance",   self.Braindance)
     mod:SetActivityHandler("CyberVision.PhotoMode",    self.PhotoMode)
     mod:SetActivityHandler("DiscordRPC2.DeathMenu",    self.DeathMenu)
