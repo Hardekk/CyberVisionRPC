@@ -25,7 +25,7 @@ RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::v1::PluginInfo* aInfo)
 {
     aInfo->name = L"CyberVision RPC";
     aInfo->author = L"Marco4413";
-    aInfo->version = RED4EXT_V1_SEMVER(2, 9, 1);
+    aInfo->version = RED4EXT_V1_SEMVER(2, 9, 2);
     aInfo->runtime = RED4EXT_V1_RUNTIME_VERSION_INDEPENDENT;
     aInfo->sdk = RED4EXT_V1_SDK_VERSION_CURRENT;
 }
